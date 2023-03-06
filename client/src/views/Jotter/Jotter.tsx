@@ -1,4 +1,8 @@
+import { JotsProvider } from '../../context'
+
 export const Jotter = () => {
 
-  return <div />
+  return <JotsProvider>
+    <div/>
+  </JotsProvider>
 }
