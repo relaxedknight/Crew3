@@ -1,9 +1,13 @@
-import express, { Express } from 'express'
-import { Client } from '@notionhq/client'
+import type { Express, Request, Response } from 'express'
+import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints'
+
+import express from 'express'
+import { Client, isFullPage } from '@notionhq/client'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
 import { guard } from './util'
+import { transform } from './library'
 
 dotenv.config();
 
@@ -92,3 +96,27 @@ const DATABASE_ID = (() => {
     console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
   });
 })()
+
+app.get('/jots', async (req: Request, res: Response, next) => {
+
+  try {
+    const ret = await notion.databases.query({
+      database_id: DATABASE_ID
+    })
+
+    const transformed = ret.results
+      .filter((result): result is PageObjectResponse => isFullPage(result))
+      .map((result) => transform.beToFe(result))
+
+    res.json({
+      ok: true,
+      results: transformed
+    })
+  } catch (e) {
+    res.json({
+      ok: false
+    })
+
+    next(e)
+  }
+})
