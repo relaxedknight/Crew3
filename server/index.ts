@@ -168,3 +168,34 @@ app.post(
     }
   }
 )
+
+app.delete(
+  '/jot',
+  validator.body(
+    joi.object({
+      id: joi.string().required()
+    })
+  ),
+  async (
+    { body }: Request,
+    res: Response,
+    next
+  ) => {
+
+    try {
+      await notion.blocks.delete({
+        block_id: body.id
+      })
+
+      res.json({
+        ok: true
+      })
+    } catch (e) {
+      res.json({
+        ok: false
+      })
+
+      next(e)
+    }
+  }
+)
