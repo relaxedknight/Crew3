@@ -8,7 +8,7 @@ const queryClient = new QueryClient();
 export const App = () => (
   <QueryClientProvider client={queryClient}>
     <ChakraProvider theme={theme}>
-      <Grid minH='100vh' p={3}>
+      <Grid minH='100vh'>
         <ColorModeSwitcher justifySelf='flex-end' />
         <Jotter />
       </Grid>
