@@ -1,10 +1,12 @@
 import type { Express, Request, Response } from 'express'
 import type { PageObjectResponse } from '@notionhq/client/build/src/api-endpoints'
 
-import express from 'express'
 import { Client, isFullPage } from '@notionhq/client'
+import { createValidator } from 'express-joi-validation'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import express from 'express'
+import joi from 'joi'
 
 import { guard } from './util'
 import { transform } from './library'
@@ -15,6 +17,8 @@ const app: Express = express()
 const port = process.env.PORT
 
 const notion = new Client({ auth: process.env.NOTION_KEY })
+
+const validator = createValidator()
 
 // Body parsing Middleware
 app.use(express.json())
@@ -120,3 +124,47 @@ app.get('/jots', async (req: Request, res: Response, next) => {
     next(e)
   }
 })
+
+app.post(
+  '/jot',
+  validator.body(
+    joi.object({
+      title: joi.string().required(),
+      content: joi.string().required()
+    })
+  ),
+  async (
+    { body }: Request,
+    res: Response,
+    next
+  ) => {
+
+    try {
+
+      const response = await notion.pages.create({
+        parent: {
+          database_id: DATABASE_ID
+        },
+        properties: transform.feToBe(body)
+      })
+
+      if (!isFullPage(response)) {
+
+        throw 'Unknown error occurred'
+      }
+
+      res.json({
+        ok: true,
+        result: transform.beToFe(response)
+      })
+    } catch (e) {
+      console.error(e)
+
+      res.json({
+        ok: false
+      })
+
+      next(e)
+    }
+  }
+)
